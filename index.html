@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="manifest" href="files/manifest.json">
+    <!--Todos los metadatos que pongamos van a ayudar a la accesibilidad de la aplicación-->
+    <meta name="description" content="Una app de películas">
+    <meta name="theme-color" content="#6200ee">
+    <meta name="apple-mobile-web-app-title" content="Pelis">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="files/icons/camera192.png">
+    <title>Mis Películas</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        --primary: #6200ee;
+        --secondary: #29b6f6;
+        margin: 0px;
+      }
+      * {
+        font-family: "Roboto", sans-serif;
+      }
+      button {
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        text-decoration: none;
+        margin: 2px;
+        color: var(--primary);
+        background: white;
+        border: 1px solid var(--primary);
+        height: 20px;
+        font-size: 9px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: ease-in 0.2s all;
+        padding: 0 8px 0 8px;
+      }
+      div#main {
+        padding: 10px;
+      }
+      input {
+        margin-bottom: 5px;
+        margin-top: 2px;
+        padding: 4px;
+        font-size: 12px;
+      }
+      h1 {
+        background: var(--primary);
+        color: white;
+        font-weight: 300;
+        text-transform: uppercase;
+        font-size: 20px;
+        margin: 0px;
+        padding: 15px;
+      }
+      h2 {
+        margin-block-start: 0px;
+        margin-block-end: 10px;
+        font-size: 20px;
+        color: var(--primary);
+      }
+      button:hover {
+        background: var(--primary);
+        color: white;
+      }
+      div.actions {
+        margin-top: 10px;
+      }
+      div.movie {
+        display: inline-block;
+        width: auto;
+        padding: 10px;
+        box-shadow: 2px 2px 7px #ccc;
+        margin: 5px;
+      }
+      div.movie div.movie-img {
+        width: 200px;
+        height: auto;
+        min-height: 200px;
+        cursor: pointer;
+      }
+      div.movie div.movie-img img {
+        width: 100%;
+        height: auto;
+      }
+      div.movie div.title {
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 200px;
+        white-space: nowrap;
+      }
+      div.field {
+        color: var(--primary);
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+    </style>
+
+    <script type="text/javascript">
+      // MODELO DE DATOS
+
+      //Creamos un array con las peliculas iniciales del "registro base"
+      const mis_peliculas_iniciales = [
+        {
+          titulo: "Superlópez",
+          director: "Javier Ruiz Caldera",
+          miniatura: "files/superlopez.png",
+        },
+        {
+          titulo: "Jurassic Park",
+          director: "Steven Spielberg",
+          miniatura: "files/jurassicpark.png",
+        },
+        {
+          titulo: "Interstellar",
+          director: "Christopher Nolan",
+          miniatura: "files/interstellar.png",
+        },
+      ];
+      // para acceder al valor de una propiedad podemos usar el operador punto(.) objeto.propiedad o con [<se interpreta como un string>], objeto[propiedad]
+      // cada conjunto de propiedades de un objeto están entre llaves y cada propiedad puede tener a su vez más propiedades, son como objetos
+
+      localStorage.clear();
+      localStorage.mis_peliculas =
+        localStorage.mis_peliculas || JSON.stringify(mis_peliculas_iniciales);
+      // creamos el contenedir mis_peliculas, sólo si no existe, y lo inicializamos con un string de mis_peliculas iniciales
+      // en el caso de que ya exista el contenedor, no se modifica su valor
+
+      // VISTAS
+      const indexView = (peliculas) => {
+        //el parámetro es el array que almacena todas las películas
+        //genera los botones y el codigo HTML en general, que pueden usarse cuando estamos en esta vista como codigo HTML dinamico
+        // un evento provocará la ejecución del CONTROLADOR indexContr que llevará a desarrollar código HTML aquí y representarlo en pantalla
+        let i = 0;
+        let view = "";
+        // creamos un índice i para recorrer el array de objetos (películas) mis_peliculas
+        // creamos un elemento view que nos permite poner en un mismo string la información de cada película una a una
+
+        while (i < peliculas.length) {
+          // vamos recorriendo el array copia de mi_peliculas, pelicula a pelicula
+          view += `
+                <div class="movie"> <!--la clase Movie tiene internamente 3 clases más-->
+                   <div class="movie-img">
+                        <img data-my-id="${i}" src="${
+            peliculas[i].miniatura
+          }" onerror="this.src='files/placeholder.png'"/>
+                   </div>
+                   <div class="title">
+                       ${peliculas[i].titulo || "<em>Sin título</em>"}
+                       <!--introducimos el nombre de la pelicula en formato string o si no tiene se pone 'Sin Título' por defecto-->
+                   </div>
+                   <div class="actions">
+                        <!--Insertar aquí botones de "Show" y "Delete"-->
+                        <!--<button class="show" data-my-id="${i}">${
+            JSON.parse(localStorage.mis_peliculas)[i].titulo
+          }</span>-->
+                        <button class="show" data-my-id="${i}">Ver</span>
+                        <button class="edit" data-my-id="${i}">Editar</button>
+                        <button class="delete" data-my-id="${i}">Borrar</button>
+                        <!--para cada pelicula se añaden todos estos botones-->
+                        <!--el data-my-id sirve para que el botón tenga un identificador de la posicion en la que se encuentra la pelicula en cuestión en el array-->
+                    </div>
+                </div>\n`;
+          i = i + 1;
+        }
+
+        view += `<div class="actions">
+                        <!--Insertar aquí botones de "Añadir" y "Reset"-->
+                        <button class="new">Añadir</button>
+                        <button class="reset">Reset</button>
+                    </div>`;
+
+        return view;
+      };
+
+      const editView = (i, pelicula) => {
+        return `<h2>Editar Película </h2>
+                <div class="field">
+                Título <br>
+                <input  type="text" id="titulo" placeholder="Título" 
+                        value="${pelicula.titulo}">
+                </div>
+                <div class="field">
+                Director <br>
+                <input  type="text" id="director" placeholder="Director" 
+                        value="${pelicula.director}">
+                </div>
+                <div class="field">
+                Miniatura <br>
+                <input  type="text" id="miniatura" placeholder="URL de la miniatura" 
+                        value="${pelicula.miniatura}">
+                </div>
+                <div class="actions">
+                    <button class="update" data-my-id="${i}">
+                        Actualizar
+                    </button>
+                    <button class="index">
+                        Volver
+                    </button>
+               `;
+      };
+
+      const showView = (pelicula) => {
+        // Completar: genera HTML con información de la película por eso ponemos un párrafo en donde vamos a poner la información
+        // ...
+
+        return `
+             <p>
+                La pelicula <strong>${pelicula.titulo}</strong> fue dirigida por <strong>${pelicula.director}</strong>!
+             </p>
+             <div class="actions">
+                <button class="index">Volver</button>
+             </div>`;
+      };
+
+      const newView = () => {
+        // Completar: genera formulario para crear nuevo quiz
+        // ...
+
+        // aqui definimos la parte de HTML que queremos que se introduzca nueva en el código HTML
+        return `<h2>Crear Película</h2>
+                <div class="field">
+                Título <br>
+                <input  type="text" id="titulo" placeholder="Título" 
+                        value="">
+                </div>
+                <div class="field">
+                Director <br>
+                <input  type="text" id="director" placeholder="Director" 
+                        value="">
+                </div>
+                <div class="field">
+                Miniatura <br>
+                <input  type="text" id="miniatura" placeholder="URL de la miniatura" 
+                        value="">
+                </div>
+
+                <div class="actions">
+                    <button class="create">Crear</button>
+                    <button class="index">Volver</button>
+                </div>`;
+      };
+
+      // CONTROLADORES
+      // llevan el codigo HTML a la pantalla mediante el uso de las VISTAS
+      const indexContr = () => {
+        //
+        let mis_peliculas = JSON.parse(localStorage.mis_peliculas); // objeto COPIA de mis_peliculas
+        document.getElementById("main").innerHTML = indexView(mis_peliculas);
+        // pasamos por parametro mis_peliculas para que indexView genere el código adecuado
+      };
+
+      const showContr = (i) => {
+        // Completar: controlador que muestra la vista showView(pelicula)
+        // ...
+        let pelicula = JSON.parse(localStorage.mis_peliculas)[i]; // sacamos el objeto pelicula de la posición i del array que guarda las peliculas
+        document.getElementById("main").innerHTML = showView(pelicula);
+        // en el main metemos el código generado por la VISTA showView
+      };
+
+      const newContr = () => {
+        // Completar: controlador que muestra la vista newView()
+        // ...
+        document.getElementById("main").innerHTML = newView();
+      };
+
+      const createContr = () => {
+        // Completar: controlador que crea una película nueva en el modelo guardado en localStorage
+        // ...
+        let mis_peliculas_nuevas = JSON.parse(localStorage.mis_peliculas);
+        let nueva_pelicula = { titulo: "", director: "", miniatura: "" };
+        mis_peliculas_nuevas.push(nueva_pelicula);
+        let i = mis_peliculas_nuevas.length - 1;
+        mis_peliculas_nuevas[i].titulo = document.getElementById(
+          "titulo"
+        ).value;
+        mis_peliculas_nuevas[i].director = document.getElementById(
+          "director"
+        ).value;
+        mis_peliculas_nuevas[i].miniatura = document.getElementById(
+          "miniatura"
+        ).value;
+        localStorage.mis_peliculas = JSON.stringify(mis_peliculas_nuevas);
+        indexContr();
+      };
+
+      const editContr = (i) => {
+        // la posicion i d ela pelicula que queremos editar viene dado por el data-my-id que lleva el botón de cada película con su posición en el array de peliculas
+        let pelicula = JSON.parse(localStorage.mis_peliculas)[i]; // sacamos el objeto que queremos modificar
+        document.getElementById("main").innerHTML = editView(i, pelicula); // pasamos la posicion en el array del objeto que queremos modificar y el objeto como tal
+      };
+
+      const updateContr = (i) => {
+        // de la misma manera que en el controlador anterior, aquí se pasa la posición de la película en el array con el identificador data-my-id que tiene el botón actualizar de la VISTA editView
+        let mis_peliculas = JSON.parse(localStorage.mis_peliculas);
+        mis_peliculas[i].titulo = document.getElementById("titulo").value;
+        mis_peliculas[i].director = document.getElementById("director").value;
+        mis_peliculas[i].miniatura = document.getElementById("miniatura").value;
+        localStorage.mis_peliculas = JSON.stringify(mis_peliculas);
+        indexContr(); // para volver a la vista principal tras editar algún valor d elas propiedades de alguna pelicula, o NO
+        // los nombres de los getElementById los puedo comprobar en la VISTA editView
+      };
+
+      const deleteContr = (i) => {
+        // Completar:  controlador que actualiza el modelo borrando la película seleccionada
+        // Genera diálogo de confirmación: botón Aceptar devuelve true, Cancel false
+        let confirmar = confirm(
+          "¿Está seguro de que desea eliminar esta película?"
+        );
+        if (confirmar) {
+          let peliculas_lista = JSON.parse(localStorage.mis_peliculas);
+          peliculas_lista.splice(i, 1);
+          localStorage.mis_peliculas = JSON.stringify(peliculas_lista);
+          indexContr();
+        }
+        indexContr();
+      };
+
+      const resetContr = () => {
+        // Completar:  controlador que reinicia el modelo guardado en localStorage con las películas originales
+        //localStorage.clear();
+        localStorage.mis_peliculas = JSON.stringify(mis_peliculas_iniciales);
+        mis_peliculas_restauradas = JSON.parse(localStorage.mis_peliculas);
+        //indexView(mis_peliculas_restauradas);
+        document.getElementById("main").innerHTML = indexView(
+          mis_peliculas_restauradas
+        );
+      };
+
+      // ROUTER de eventos
+      const matchEvent = (ev, sel) => ev.target.matches(sel);
+      const myId = (ev) => Number(ev.target.dataset.myId);
+
+      document.addEventListener("click", (ev) => {
+        if (matchEvent(ev, ".index")) indexContr();
+        else if (matchEvent(ev, ".show")) showContr(myId(ev));
+        else if (matchEvent(ev, ".new")) newContr();
+        else if (matchEvent(ev, ".create")) createContr();
+        else if (matchEvent(ev, ".edit")) editContr(myId(ev));
+        else if (matchEvent(ev, ".update")) updateContr(myId(ev));
+        else if (matchEvent(ev, ".delete")) deleteContr(myId(ev));
+        else if (matchEvent(ev, ".reset")) resetContr();
+        // Completar añadiendo los controladores que faltan
+      });
+
+      // Inicialización
+      document.addEventListener("DOMContentLoaded", indexContr);
+    </script>
+  </head>
+
+  <body>
+    <h1>Mis Películas Favoritas</h1>
+    <button id="but_install" aria-label="Install" hidden>INSTALAR APP PELÍCULAS...</button>
+    <div id="main"><!-- La vista se incluye aquí --></div>
+    <!--según la vista en la que se esté trabajando en cada momento, se genera el código HTML correspondiente aquí-->
+
+    <script>
+      if('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('service-worker.js').then((reg) => {
+            console.log("Service worker registered", reg);
+          })
+        })
+      }
+    </script>
+    <!--el js que ponemos en el register, tiene que estar en la raíz del proyecto por el ámbito en el que lo ponemos-->
+
+    <script src="file/install.js"></script>
+
+  </body>
+</html>
